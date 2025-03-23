@@ -37,7 +37,7 @@ if (cluster.isPrimary) {
 
  
   app.use(cors({
-    origin:  ["http://localhost:3000", "http://localhost:3001" ], 
+    origin:  ["https://tour-travels-39t9.vercel.app", "https://tour-travels-theta.vercel.app/admin/all-tours" ], 
     credentials: true,
   }));
 
