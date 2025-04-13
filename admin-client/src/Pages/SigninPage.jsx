@@ -18,11 +18,12 @@ import { useSnackbar } from "../Components/SnackbarProvider";
 
 import { useDispatch } from "react-redux";
 import { userLogin } from "../redux/slices/authSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { login } from "../api/userAPI";
 
 const SignInPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -64,13 +65,30 @@ if(role === 'user'){
       // Show success message
       showSnackbar(message || "Logged in successfully!", "success");
 
-      // Navigate to home page only if login is successful
-      navigate("/admin/dashboard");
+      // Navigate to the last visited URL or default to dashboard
+      const lastVisitedUrl = sessionStorage.getItem("lastVisitedUrl") || "/admin/dashboard";
+      sessionStorage.removeItem("lastVisitedUrl"); // Clear after use
+      
+      // If came from a specific page, go there, otherwise go to the saved or default route
+      const from = location.state?.from?.pathname || lastVisitedUrl;
+      navigate(from, { replace: true });
     } catch (error) {
       const errorMessage =
         error.response?.data?.msg || "Invalid credentials. Please try again.";
       showSnackbar(errorMessage, "error");
     }
+  };
+
+  // Display error if redirected due to unauthorized access
+  const displayErrorMessage = () => {
+    if (location.state?.error) {
+      return (
+        <Typography color="error" sx={{ mb: 2 }}>
+          {location.state.error}
+        </Typography>
+      );
+    }
+    return null;
   };
 
   return (
@@ -108,29 +126,32 @@ if(role === 'user'){
           </Typography>
 
           <form onSubmit={handleSubmit}>
-            <TextField
-              label="Username"
-              name="username"
-              fullWidth
-              variant="outlined"
-              value={formData.username}
-              onChange={handleChange}
-              error={!!errors.username}
-              helperText={errors.username}
-              sx={{ marginBottom: 2 }}
-            />
-            <TextField
-              label="Password"
-              name="password"
-              type="password"
-              fullWidth
-              variant="outlined"
-              value={formData.password}
-              onChange={handleChange}
-              error={!!errors.password}
-              helperText={errors.password}
-              sx={{ marginBottom: 2 }}
-            />
+            <Box sx={{ mb: 2 }}>
+              {displayErrorMessage()}
+              <TextField
+                label="Username"
+                name="username"
+                fullWidth
+                variant="outlined"
+                value={formData.username}
+                onChange={handleChange}
+                error={!!errors.username}
+                helperText={errors.username}
+                sx={{ marginBottom: 2 }}
+              />
+              <TextField
+                label="Password"
+                name="password"
+                type="password"
+                fullWidth
+                variant="outlined"
+                value={formData.password}
+                onChange={handleChange}
+                error={!!errors.password}
+                helperText={errors.password}
+                sx={{ marginBottom: 2 }}
+              />
+            </Box>
             <Box
               sx={{
                 display: "flex",
@@ -333,7 +354,7 @@ if(role === 'user'){
               color: "#666",
             }}
           >
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <Link
               href="/signup"
               sx={{

@@ -18,10 +18,11 @@ import { useSnackbar } from "../components/SnackbarProvider";
 import { login } from "../api/auth";
 import { useDispatch } from "react-redux";
 import { userLogin } from "../redux/slices/authSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const SignInPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -52,14 +53,19 @@ const SignInPage = () => {
         formData.password
       );
       
-      // Dispatch user login action if successful
+      // Dispatch user login action
       dispatch(userLogin({ userId, token, name, email }));
       
       // Show success message
       showSnackbar(msg || "Logged in successfully!", "success");
       
-      // Navigate to home page only if login is successful
-      navigate("/");
+      // Navigate to the last visited URL or default to homepage
+      const lastVisitedUrl = sessionStorage.getItem("lastVisitedUrl") || "/user/dashboard";
+      sessionStorage.removeItem("lastVisitedUrl"); // Clear after use
+      
+      // If came from a specific page, go there, otherwise go to the saved or default route
+      const from = location.state?.from?.pathname || lastVisitedUrl;
+      navigate(from, { replace: true });
     } catch (error) {
       const errorMessage =
         error.response?.data?.msg || "Invalid credentials. Please try again.";  
@@ -328,7 +334,7 @@ const SignInPage = () => {
               color: "#666",
             }}
           >
-            Don’t have an account?{" "}
+            Don't have an account?{" "}
             <Link
               href="/signup"
               sx={{

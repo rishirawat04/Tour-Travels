@@ -31,9 +31,8 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Create indexes for unique fields
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ username: 1 }, { unique: true });
+// Create indexes for fields
+// Removed duplicate email and username indexes as they're already unique in the schema
 userSchema.index({ otp: 1 });
 userSchema.index({ otpExpiry: 1 });
 userSchema.index({ isVerified: 1 });

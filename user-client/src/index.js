@@ -8,6 +8,8 @@ import { SnackbarProvider } from './components/SnackbarProvider';
 import { Provider } from "react-redux";
 import { PersistGate } from "redux-persist/integration/react";
 import { persistor, store } from './redux/store';
+import { checkAuthStatus } from "./utils/checkAuthStatus";
+
 const suppressResizeObserverError = () => {
   const resizeObserverErr = window.console.error;
   window.console.error = (...args) => {
@@ -31,6 +33,9 @@ const theme = createTheme({
     },
   },
 });
+
+// Check authentication status when app starts
+checkAuthStatus(store);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

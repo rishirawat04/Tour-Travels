@@ -54,9 +54,9 @@ const App = () => {
         <Route
           path="/admin"
           element={
-           
+            <ProtectedRoute>
               <LayoutPage />
-            
+            </ProtectedRoute>
           }
         >
           <Route index path="dashboard" element={<DashboardPage />} />
