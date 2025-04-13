@@ -1,32 +1,79 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Typography, Card, CardMedia, CardContent, Button, Grid } from '@mui/material';
-
+import { Box, Typography, Card, CardMedia, CardContent, Button, Grid, CircularProgress } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { getBlogs } from '../api/blogApi';
 
 function BlogPage() {
   const [blogs, setBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const getBlog = async () => {
+    const fetchBlogs = async () => {
       try {
+        setLoading(true);
         const data = await getBlogs();
-        const limitedBlogs = data.data.slice(0, 3);
-        setBlogs(limitedBlogs);
+        
+        // Blogs API should now return a properly structured array
+        if (Array.isArray(data) && data.length > 0) {
+          const limitedBlogs = data.slice(0, 3);
+          setBlogs(limitedBlogs);
+        } else {
+          console.warn("No blog data available or unexpected format", data);
+          setError("No blog posts available at the moment");
+          setBlogs([]);
+        }
       } catch (error) {
-        console.error("Error fetching destinations:", error);
+        console.error("Error fetching blogs:", error);
+        setError("Failed to load blog posts");
+        setBlogs([]);
+      } finally {
+        setLoading(false);
       }
     };
 
-    getBlog();
+    fetchBlogs();
   }, []);
 
   const truncateDescription = (description) => {
+    if (!description) return '';
     const maxLength = 70; 
     return description.length > maxLength
       ? `${description.substring(0, maxLength)}...`
       : description;
   };
+
+  if (loading) {
+    return (
+      <Box sx={{ bgcolor: '#FAF3E0', p: 4, mt: 16, textAlign: 'center' }}>
+        <Typography variant="h5" component="div" color="textSecondary">
+          Our Blog
+        </Typography>
+        <Typography variant="h4" component="h2" fontWeight="bold">
+          Latest Blogs & Articles
+        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <CircularProgress />
+        </Box>
+      </Box>
+    );
+  }
+
+  if (error || blogs.length === 0) {
+    return (
+      <Box sx={{ bgcolor: '#FAF3E0', p: 4, mt: 16, textAlign: 'center' }}>
+        <Typography variant="h5" component="div" color="textSecondary">
+          Our Blog
+        </Typography>
+        <Typography variant="h4" component="h2" fontWeight="bold">
+          Latest Blogs & Articles
+        </Typography>
+        <Typography variant="body1" color="error" sx={{ mt: 4 }}>
+          {error || "No blog posts available at the moment."}
+        </Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ bgcolor: '#FAF3E0', p: 4, mt: 16 }}>
@@ -50,7 +97,7 @@ function BlogPage() {
 
       <Grid container spacing={4}>
         {blogs.map((blog, index) => (
-          <Grid item xs={12} sm={6} md={4} key={index}>
+          <Grid item xs={12} sm={6} md={4} key={blog._id || index}>
             <Card
               sx={{
                 width: '100%',
@@ -64,8 +111,8 @@ function BlogPage() {
               <CardMedia
                 component="img"
                 height="180"
-                image={blog.image}
-                alt={blog.title}
+                image={blog.image || 'https://via.placeholder.com/300x180?text=Blog+Image'}
+                alt={blog.title || 'Blog post'}
                 sx={{
                   borderRadius: '8px',
                   objectFit: 'cover',
@@ -83,11 +130,11 @@ function BlogPage() {
                   fontSize: '0.875rem',
                 }}
               >
-                  {new Date(blog.createdAt).toLocaleDateString('en-US', {
+                {blog.createdAt ? new Date(blog.createdAt).toLocaleDateString('en-US', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
-                })}
+                }) : 'No date'}
               </Box>
               <Box
                 sx={{
@@ -106,18 +153,20 @@ function BlogPage() {
                     component="div"
                     fontWeight="bold"
                   >
-                    {blog.title}
+                    {blog.title || 'Untitled Blog Post'}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
                     {truncateDescription(blog.description)}
                   </Typography>
                 </CardContent>
                 <Box sx={{ textAlign: 'center', py: 1.5,  }}>
-                  <Link to={`/Blog-Details/${blog._id}`}>
-                    <Button variant="text" color="primary">
-                      Read More &gt;
-                    </Button>
-                  </Link>
+                  {blog._id && (
+                    <Link to={`/Blog-Details/${blog._id}`}>
+                      <Button variant="text" color="primary">
+                        Read More &gt;
+                      </Button>
+                    </Link>
+                  )}
                 </Box>
               </Box>
             </Card>
