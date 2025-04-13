@@ -11,6 +11,7 @@ import { getTestimonial } from '../api/testmonial';
 
 const TestimonialPage = () => {
   const [testimonial, setTestimonial] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const settings = {
     dots: true,
@@ -25,11 +26,26 @@ const TestimonialPage = () => {
   useEffect(() => {
     const fetchTestimonial = async () => {
       try {
-        const data = await getTestimonial();
-        const publishedTestimonials = data.data.filter(t => t.status === "Published"); // Filter for Published testimonials
-        setTestimonial(publishedTestimonials);
+        setLoading(true);
+        const response = await getTestimonial();
+        
+        // Check if response data exists and has the expected structure
+        if (response && response.data && Array.isArray(response.data)) {
+          const publishedTestimonials = response.data.filter(t => t.status === "Published");
+          setTestimonial(publishedTestimonials);
+        } else if (response && response.data && Array.isArray(response.data.data)) {
+          // Alternative structure some APIs might return
+          const publishedTestimonials = response.data.data.filter(t => t.status === "Published");
+          setTestimonial(publishedTestimonials);
+        } else {
+          console.error("Unexpected response structure:", response);
+          setTestimonial([]);
+        }
       } catch (error) {
         console.error("Error fetching testimonials:", error);
+        setTestimonial([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -56,21 +72,29 @@ const TestimonialPage = () => {
       </Box>
 
       {/* Testimonials Slider */}
-      <Slider {...settings} style={{ border: "none", boxShadow: "none" }}>
-        {testimonial.map((testimonial) => (
-          <Box key={testimonial._id} sx={{ p: 4, mx: 2, maxWidth: 600, margin: '0 auto', height: "150px" }}>
-            <Typography variant="body1" color="textSecondary" mb={2}>
-              {testimonial.comment}
-            </Typography>
-            <Box display="flex" alignItems="center" justifyContent="center" mt={3}>
-              <Avatar src={testimonial.userId.profilePic} sx={{ mr: 2 }} />
-              <Box textAlign="left">
-                <Typography variant="subtitle1" fontWeight="bold">{testimonial.userId.firstname} {testimonial.userId.lastname}</Typography>
+      {loading ? (
+        <Typography>Loading testimonials...</Typography>
+      ) : testimonial.length > 0 ? (
+        <Slider {...settings} style={{ border: "none", boxShadow: "none" }}>
+          {testimonial.map((item) => (
+            <Box key={item._id} sx={{ p: 4, mx: 2, maxWidth: 600, margin: '0 auto', height: "150px" }}>
+              <Typography variant="body1" color="textSecondary" mb={2}>
+                {item.comment}
+              </Typography>
+              <Box display="flex" alignItems="center" justifyContent="center" mt={3}>
+                <Avatar src={item.userId?.profilePic} sx={{ mr: 2 }} />
+                <Box textAlign="left">
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {item.userId?.firstname || 'Anonymous'} {item.userId?.lastname || ''}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
-          </Box>
-        ))}
-      </Slider>
+          ))}
+        </Slider>
+      ) : (
+        <Typography>No testimonials available at the moment.</Typography>
+      )}
     </Box>
   );
 };
