@@ -71,7 +71,7 @@ export const Verification_Email_Template = `
               <p>If you did not create an account, no further action is required. If you have any questions, feel free to contact our support team.</p>
           </div>
           <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} AnoTech Travels. All rights reserved.</p>
+              <p>&copy; ${new Date().getFullYear()} RishiTech04. All rights reserved.</p>
           </div>
       </div>
   </body>
@@ -87,7 +87,7 @@ export const Welcome_Email_Template = `
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Anotech Travels!</title>
+    <title>Welcome to RishiTech04!</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -152,21 +152,21 @@ export const Welcome_Email_Template = `
 </head>
 <body>
     <div class="container">
-        <div class="header">Welcome to Anotech Travels!</div>
+        <div class="header">Welcome to RishiTech04!</div>
         <div class="content">
             <p class="welcome-message">Hello {name},</p>
-            <p>Welcome aboard! We're thrilled to have you as part of the Anotech Travels family. Your registration was successful, and we're excited to help you plan your dream trips.</p>
-            <p>Here’s how you can get started:</p>
+            <p>Welcome aboard! We're thrilled to have you as part of the RishiTech04 family. Your registration was successful, and we're excited to help you plan your dream trips.</p>
+            <p>Here's how you can get started:</p>
             <ul>
                 <li>Browse our wide selection of tours and travel packages tailored just for you.</li>
                 <li>Stay updated with exclusive travel deals and offers by checking your email.</li>
                 <li>Get in touch with our expert travel consultants for personalized travel advice.</li>
             </ul>
             <a href="#" class="button">Explore Our Tours</a>
-            <p>We’re here to make your travel experience as seamless and enjoyable as possible. If you have any questions, feel free to reach out to our customer support team.</p>
+            <p>We're here to make your travel experience as seamless and enjoyable as possible. If you have any questions, feel free to reach out to our customer support team.</p>
         </div>
         <div class="footer">
-            <p>&copy; ${new Date().getFullYear()} Anotech Travels. All rights reserved.</p>
+            <p>&copy; ${new Date().getFullYear()} RishiTech04. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -244,11 +244,11 @@ export const Forgot_Password_Email_Template = `
               <p class="reset-message">Hello {name},</p>
               <p>We received a request to reset your password. Please use the code below to proceed with resetting your password.</p>
               <p class="code">{code}</p>
-              <p>If you didn’t request a password reset, please ignore this email or contact our support team if you have any concerns.</p>
+              <p>If you didn't request a password reset, please ignore this email or contact our support team if you have any concerns.</p>
               <p>Thank you for being a part of our community.</p>
           </div>
           <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} AnoTech Travels. All rights reserved.</p>
+              <p>&copy; ${new Date().getFullYear()} RishiTech04. All rights reserved.</p>
           </div>
       </div>
   </body>

@@ -83,10 +83,15 @@ export const signup = async (req, res) => {
 
     await newUser.save();
 
-    // Send verification email asynchronously
-    sendVerificationEmail(email, otp).catch((error) => {
-      console.error("Email sending error:", error);
-    });
+    // Send verification email with proper handling
+    try {
+      const emailResult = await sendVerificationEmail(email, otp);
+      if (!emailResult.success) {
+        console.error("Failed to send verification email:", emailResult.error);
+      }
+    } catch (emailError) {
+      console.error("Email sending error:", emailError);
+    }
 
     // Respond to client immediately
     res.status(201).json({
@@ -106,13 +111,22 @@ export const signup = async (req, res) => {
 export const resendVerificationCode = async (req, res) => {
   const { email } = req.body;
 
+  if (!email) {
+    return res.status(400).json({ success: false, msg: "Email is required." });
+  }
+
   try {
     const user = await User.findOne({ email }).select(
-      "isVerified otp otpExpiry email"
+      "isVerified otp otpExpiry email firstname lastname"
     );
-    if (!user) return res.status(400).json({ msg: "User not found." });
-    if (user.isVerified)
-      return res.status(400).json({ msg: "Account already verified." });
+    
+    if (!user) {
+      return res.status(400).json({ success: false, msg: "User not found." });
+    }
+    
+    if (user.isVerified) {
+      return res.status(400).json({ success: false, msg: "Account already verified." });
+    }
 
     // Generate a new verification code
     const verificationCode = generateOTP();
@@ -122,11 +136,36 @@ export const resendVerificationCode = async (req, res) => {
     user.otpExpiry = verificationCodeExpires;
     await user.save();
 
-    await sendVerificationEmail(email, verificationCode);
-    res.status(200).json({ msg: "New verification code sent to your email." });
+    // Send verification email with proper handling
+    try {
+      const emailResult = await sendVerificationEmail(email, verificationCode);
+      if (!emailResult.success) {
+        return res.status(500).json({ 
+          success: false, 
+          msg: "Failed to send verification email. Please try again later.",
+          error: emailResult.error
+        });
+      }
+    } catch (emailError) {
+      console.error("Email sending error:", emailError);
+      return res.status(500).json({ 
+        success: false, 
+        msg: "Error sending verification email",
+        error: emailError.message
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      msg: "New verification code sent to your email." 
+    });
   } catch (error) {
     console.error("Error sending new code:", error);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ 
+      success: false, 
+      msg: "Server error", 
+      error: error.message 
+    });
   }
 };
 
@@ -134,20 +173,44 @@ export const resendVerificationCode = async (req, res) => {
 export const verifyAccount = async (req, res) => {
   const { email, code } = req.body;
 
+  if (!email || !code) {
+    return res.status(400).json({ 
+      success: false, 
+      msg: "Email and verification code are required." 
+    });
+  }
+
   try {
     const user = await User.findOne({ email }).select(
-      "otp otpExpiry isVerified"
+      "firstname lastname otp otpExpiry isVerified"
     );
-    if (!user) return res.status(400).json({ msg: "User not found." });
-    if (user.isVerified)
-      return res.status(400).json({ msg: "Account already verified." });
+    
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        msg: "User not found." 
+      });
+    }
+    
+    if (user.isVerified) {
+      return res.status(400).json({ 
+        success: false, 
+        msg: "Account already verified." 
+      });
+    }
 
     if (user.otp !== code) {
-      return res.status(400).json({ msg: "Invalid verification code." });
+      return res.status(400).json({ 
+        success: false, 
+        msg: "Invalid verification code." 
+      });
     }
 
     if (user.otpExpiry < new Date()) {
-      return res.status(400).json({ msg: "Verification code has expired." });
+      return res.status(400).json({ 
+        success: false, 
+        msg: "Verification code has expired." 
+      });
     }
 
     // Mark the user as verified
@@ -156,12 +219,31 @@ export const verifyAccount = async (req, res) => {
     user.otpExpiry = null;
     await user.save();
 
-    await sendWelcomeEmail(user.email, `${user.firstname} ${user.lastname}`);
+    // Send welcome email with proper handling
+    try {
+      const fullName = `${user.firstname} ${user.lastname}`;
+      const emailResult = await sendWelcomeEmail(email, fullName);
+      
+      if (!emailResult.success) {
+        console.error("Failed to send welcome email:", emailResult.error);
+        // We don't return error here since the account is already verified
+      }
+    } catch (emailError) {
+      console.error("Welcome email error:", emailError);
+      // Continue since verification was successful
+    }
 
-    res.status(200).json({ msg: "Account verified successfully." });
+    res.status(200).json({ 
+      success: true, 
+      msg: "Account verified successfully." 
+    });
   } catch (error) {
     console.error("Verification error:", error);
-    res.status(500).json({ msg: "Server error" });
+    res.status(500).json({ 
+      success: false, 
+      msg: "Server error", 
+      error: error.message 
+    });
   }
 };
 
@@ -179,18 +261,23 @@ export const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).json({ msg: "Email is required." });
+    return res.status(400).json({ 
+      success: false, 
+      msg: "Email is required." 
+    });
   }
 
   try {
     // Find the user by email
     const user = await User.findOne({ email }).select(
-      "email username otp otpExpiry"
+      "email username firstname lastname otp otpExpiry"
     );
+    
     if (!user) {
-      return res
-        .status(404)
-        .json({ msg: "User with this email does not exist." });
+      return res.status(404).json({ 
+        success: false, 
+        msg: "User with this email does not exist." 
+      });
     }
 
     // Generate OTP and set expiration time (5 minutes)
@@ -202,16 +289,39 @@ export const forgotPassword = async (req, res) => {
     user.otpExpiry = otpExpiry;
     await user.save();
 
-    // Send OTP email asynchronously (does not block response)
-    sendForgotPassword(email, user.username, otp).catch((error) => {
-      console.error("Email sending error:", error);
-    });
+    // Send OTP email with proper handling
+    try {
+      const emailResult = await sendForgotPassword(email, user.username, otp);
+      
+      if (!emailResult.success) {
+        console.error("Failed to send reset password email:", emailResult.error);
+        return res.status(500).json({ 
+          success: false, 
+          msg: "Failed to send reset password email. Please try again later.",
+          error: emailResult.error
+        });
+      }
+    } catch (emailError) {
+      console.error("Reset password email error:", emailError);
+      return res.status(500).json({ 
+        success: false, 
+        msg: "Error sending reset password email",
+        error: emailError.message
+      });
+    }
 
-    // Respond to the client immediately
-    res.status(200).json({ msg: "OTP sent to your email." });
+    // Respond to the client
+    res.status(200).json({ 
+      success: true, 
+      msg: "Password reset OTP sent to your email." 
+    });
   } catch (error) {
     console.error("Forgot Password Error:", error);
-    res.status(500).json({ msg: "Server error", error });
+    res.status(500).json({ 
+      success: false, 
+      msg: "Server error", 
+      error: error.message 
+    });
   }
 };
 

@@ -255,7 +255,7 @@ const Layout = () => {
               fontSize: "2rem",
             }}
           >
-            A
+            R
             {sidebarOpen && (
               <p
                 style={{
@@ -264,12 +264,12 @@ const Layout = () => {
                   marginTop: "15px",
                 }}
               >
-                noTech
+                ishiTech
               </p>
             )}
           </span>
           {sidebarOpen && (
-            <span style={{ color: "#147d78", marginTop: "14px" }}>Travels</span>
+            <span style={{ color: "#147d78", marginTop: "14px" }}>04</span>
           )}
         </Typography>
       </Link>
@@ -635,7 +635,7 @@ const Layout = () => {
                 fontSize: "2rem",
               }}
             >
-              A
+              R
               {sidebarOpen && (
                 <p
                   style={{
@@ -644,14 +644,12 @@ const Layout = () => {
                     marginTop: "15px",
                   }}
                 >
-                  noTech
+                  ishiTech
                 </p>
               )}
             </span>
             {sidebarOpen && (
-              <span style={{ color: "#147d78", marginTop: "14px" }}>
-                Travels
-              </span>
+              <span style={{ color: "#147d78", marginTop: "14px" }}>04</span>
             )}
           </Typography>
         </Link>

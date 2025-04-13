@@ -167,7 +167,7 @@ const HeaderPage = () => {
                   fontSize: "2rem",
                 }}
               >
-                A
+                R
                 <p
                   style={{
                     color: "#fff",
@@ -175,11 +175,11 @@ const HeaderPage = () => {
                     marginTop: ".6rem",
                   }}
                 >
-                  noTech
+                  ishiTech
                 </p>
               </span>
               <span style={{ color: "#15a6ec", marginTop: ".5rem" }}>
-                Travels
+                04
               </span>
             </Typography>
           </Link>

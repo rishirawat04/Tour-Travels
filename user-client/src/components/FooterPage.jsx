@@ -10,7 +10,7 @@ const FooterPage = () => {
           {/* Logo and Description */}
           <Grid item xs={12} md={3}>
             <Typography variant="h6" fontWeight="bold" sx={{ color: '#f0a500' }}>
-              Anotech Travel
+              RishiTech04
             </Typography>
             <Typography variant="body2" sx={{ mt: 2, mb: 3 }}>
               The Tour and Travels project is designed to provide users with a comprehensive platform for exploring and booking various travel packages.
@@ -95,7 +95,7 @@ const FooterPage = () => {
         <Divider sx={{ my: 4, borderColor: '#444' }} />
         <Box display="flex" justifyContent="space-between" alignItems="center" flexDirection={{ xs: 'column', md: 'row' }}>
           <Typography variant="body2" color="textSecondary">
-            Copyright ©2024 <Link href="#" color="inherit">AnoTech Travel</Link> All Rights Reserved
+            Copyright ©2024 <Link href="#" color="inherit">RishiTech04</Link> All Rights Reserved
           </Typography>
           <Box display="flex" gap={2} mt={{ xs: 2, md: 0 }}>
             <Link href="#" color="inherit" underline="none">English</Link>

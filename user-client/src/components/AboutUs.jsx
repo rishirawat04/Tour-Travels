@@ -59,7 +59,7 @@ const AboutUs = () => {
         {/* Right Section with Text Content */}
         <Grid item xs={12} md={6}>
           <Typography variant="h4" fontWeight="bold" gutterBottom>
-            AnoTech Travel Makes Your Travel More Enjoyable
+            RishiTech04 Makes Your Travel More Enjoyable
           </Typography>
           <Typography variant="body1" color="textSecondary" paragraph>
             Welcome to Traveller, your ultimate destination for travel and adventure! We are

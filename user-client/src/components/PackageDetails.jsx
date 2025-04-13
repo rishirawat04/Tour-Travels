@@ -143,7 +143,7 @@ const PackageDetails = () => {
           key: process.env.REACT_APP_RAZORPAY_KEY_ID, 
           amount: response.data.amount, 
           currency: response.data.currency,
-          name: 'Anotech Travels',
+          name: 'RishiTech04',
           description: 'Our Aim to provide best services',
           order_id: response.data.razorpayOrderId,
           handler: async (razorpayResponse) => {

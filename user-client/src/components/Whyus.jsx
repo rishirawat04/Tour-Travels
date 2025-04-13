@@ -25,7 +25,7 @@ const Whyus = () => {
         variant="h4"
         sx={{ fontWeight: 700, mb: 4, px:2 }}
       >
-        Why Book With <span style={{fontSize:"3rem", color: '#008080'}}>AnoTech Travels</span> ?
+        Why Book With <span style={{fontSize:"3rem", color: '#008080'}}>RishiTech04</span> ?
       </Typography>
 
       <Grid container spacing={4} justifyContent="center">
