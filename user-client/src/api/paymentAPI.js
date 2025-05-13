@@ -12,7 +12,20 @@ export const applyCoupon = async ({code, cartAmount}) => {
     );
     return response;
   } catch (error) {
-    throw error;
+    // Check if it's an authentication error (401)
+    if (error.response && error.response.status === 401) {
+      throw {
+        ...error,
+        isAuthError: true,
+        message: error.response.data?.message || "Please login to apply a discount code"
+      };
+    }
+    
+    // Handle other errors
+    throw {
+      ...error,
+      message: error.response?.data?.message || "Failed to apply coupon. Please check the code and try again."
+    };
   }
 };
 
@@ -23,13 +36,29 @@ export const createOrder = async ({packageId, totalAmount, quantity, discountCod
         {
             packageId, 
             totalAmount,
-            quantity, discountCode
+            quantity, 
+            discountCode
         },
         { withCredentials: true }
       );
       return response;
     } catch (error) {
-      throw error;
+      // Check if it's an authentication error (401)
+      if (error.response && error.response.status === 401) {
+        console.error("Authentication error in createOrder:", error.response?.data);
+        throw {
+          ...error,
+          isAuthError: true,
+          message: error.response.data?.message || "Please login to continue with your booking"
+        };
+      }
+      
+      // Handle other errors
+      console.error("Payment order error:", error.response?.data || error.message);
+      throw {
+        ...error,
+        message: error.response?.data?.message || "Failed to create order. Please try again."
+      };
     }
   };
 
@@ -44,7 +73,20 @@ export const verifyOrder = async ({ razorpay_order_id, razorpay_payment_id, razo
       );
       return response;
     } catch (error) {
-      throw error;
+      // Check if it's an authentication error (401)
+      if (error.response && error.response.status === 401) {
+        throw {
+          ...error,
+          isAuthError: true,
+          message: error.response.data?.message || "Please login to continue with payment verification"
+        };
+      }
+      
+      // Handle other errors
+      throw {
+        ...error,
+        message: error.response?.data?.message || "Failed to verify payment. Please contact support."
+      };
     }
   };
 
@@ -53,12 +95,24 @@ export const getOrderDetials = async (userId) => {
     try {
       const response = await baseurl.get(
         `/payment/bookings/${userId}/summary`,
-
         { withCredentials: true }
       );
       return response;
     } catch (error) {
-      throw error;
+      // Check if it's an authentication error (401)
+      if (error.response && error.response.status === 401) {
+        throw {
+          ...error,
+          isAuthError: true,
+          message: error.response.data?.message || "Please login to view your booking details"
+        };
+      }
+      
+      // Handle other errors
+      throw {
+        ...error,
+        message: error.response?.data?.message || "Failed to retrieve booking details. Please try again."
+      };
     }
   };
 
@@ -68,12 +122,24 @@ export const getPaymentDetials = async (userId) => {
     try {
       const response = await baseurl.get(
         `/payment/transactions/${userId}`,
-
         { withCredentials: true }
       );
       return response;
     } catch (error) {
-      throw error;
+      // Check if it's an authentication error (401)
+      if (error.response && error.response.status === 401) {
+        throw {
+          ...error,
+          isAuthError: true,
+          message: error.response.data?.message || "Please login to view your payment details"
+        };
+      }
+      
+      // Handle other errors
+      throw {
+        ...error,
+        message: error.response?.data?.message || "Failed to retrieve payment details. Please try again."
+      };
     }
   };
 

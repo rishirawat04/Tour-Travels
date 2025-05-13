@@ -327,10 +327,15 @@ export const forgotPassword = async (req, res) => {
 
 // OTP Verification Controller
 export const verifyOTP = async (req, res) => {
-  const { email, otp } = req.body;
+  const { email, code, otp } = req.body;
+  // Accept either 'code' or 'otp' parameters for flexibility
+  const verificationCode = code || otp;
 
-  if (!email || !otp) {
-    return res.status(400).json({ msg: "Email and OTP are required." });
+  if (!email || !verificationCode) {
+    return res.status(400).json({ 
+      success: false,
+      msg: "Email and verification code are required." 
+    });
   }
 
   try {
@@ -341,15 +346,24 @@ export const verifyOTP = async (req, res) => {
     if (!user) {
       return res
         .status(404)
-        .json({ msg: "User with this email does not exist." });
+        .json({ 
+          success: false,
+          msg: "User with this email does not exist." 
+        });
     }
 
     // Check if OTP is correct and not expired
-    if (user.otp !== otp) {
-      return res.status(400).json({ msg: "Invalid OTP." });
+    if (user.otp !== verificationCode) {
+      return res.status(400).json({ 
+        success: false,
+        msg: "Invalid verification code." 
+      });
     }
     if (new Date() > user.otpExpiry) {
-      return res.status(400).json({ msg: "OTP has expired." });
+      return res.status(400).json({ 
+        success: false,
+        msg: "Verification code has expired." 
+      });
     }
 
     // OTP is valid, mark OTP as verified
@@ -357,10 +371,17 @@ export const verifyOTP = async (req, res) => {
     await user.save();
 
     // OTP is verified successfully, allow user to reset password
-    res.status(200).json({ msg: "OTP verified successfully." });
+    res.status(200).json({ 
+      success: true,
+      msg: "Verification code verified successfully." 
+    });
   } catch (error) {
     console.error("OTP Verification Error:", error);
-    res.status(500).json({ msg: "Server error", error });
+    res.status(500).json({ 
+      success: false,
+      msg: "Server error", 
+      error: error.message 
+    });
   }
 };
 

@@ -12,8 +12,17 @@ export const createOrder = async (req, res) => {
     const { packageId, totalAmount, quantity, discountCode } = req.body;
     const userId = req.user?.id;
 
+    // Verify user authentication more explicitly
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required. Please login to continue.",
+        requiresAuth: true
+      });
+    }
+
     // Validate inputs
-    if (!userId || !packageId || !totalAmount || !quantity) {
+    if (!packageId || !totalAmount || !quantity) {
       return res
         .status(400)
         .json({ success: false, message: "Missing required fields" });
@@ -82,50 +91,78 @@ export const createOrder = async (req, res) => {
     const finalPrice = originalPrice - discount;
 
     // Ensure the provided totalAmount matches the calculated final price
-    if (totalAmount !== finalPrice) {
+    // Use a small epsilon for floating point comparison instead of exact equality
+    if (Math.abs(totalAmount - finalPrice) > 0.01) {
       return res.status(400).json({
         success: false,
         message: "Price mismatch. Possible tampering detected.",
       });
     }
 
-    // Create Razorpay order
-    const options = {
-      amount: Math.round(finalPrice * 100),
-      currency: "INR",
-      receipt: `receipt_${Math.random().toString(36).substring(2)}`,
-    };
+    try {
+      // Create Razorpay order
+      const options = {
+        amount: Math.round(finalPrice * 100),
+        currency: "INR",
+        receipt: `receipt_${Math.random().toString(36).substring(2)}`,
+      };
 
-    const razorpayOrder = await razorpayInstance.orders.create(options);
+      console.log("Razorpay Configuration:", {
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET ? "**provided**" : "**missing**"
+      });
 
-    // Save the order to the database
-    const order = new Order({
-      userId,
-      packageId,
-      quantity,
-      totalAmount: finalPrice,
-      discountCode : discountCode || "not provided",
-      discount,
-      status: "Pending",
-      orderDate: new Date(),
-      razorpayOrderId: razorpayOrder.id,
-    });
+      const razorpayOrder = await razorpayInstance.orders.create(options);
 
-    await order.save({ session });
-    console.log(razorpayOrder.id, razorpayOrder.amount, razorpayOrder.currency);
-    await session.commitTransaction();
-    session.endSession();
-    res.status(200).json({
-      success: true,
-      message: "Order created successfully",
-      razorpayOrderId: razorpayOrder.id,
-      amount: razorpayOrder.amount,
-      currency: razorpayOrder.currency,
-    });
+      // Save the order to the database
+      const order = new Order({
+        userId,
+        packageId,
+        quantity,
+        totalAmount: finalPrice,
+        discountCode : discountCode || "not provided",
+        discount,
+        status: "Pending",
+        orderDate: new Date(),
+        razorpayOrderId: razorpayOrder.id,
+      });
+
+      await order.save({ session });
+      await session.commitTransaction();
+      session.endSession();
+      
+      return res.status(200).json({
+        success: true,
+        message: "Order created successfully",
+        razorpayOrderId: razorpayOrder.id,
+        amount: razorpayOrder.amount,
+        currency: razorpayOrder.currency,
+      });
+    } catch (razorpayError) {
+      // Handle specific Razorpay errors
+      if (razorpayError.statusCode === 401) {
+        console.error("Razorpay authentication failed:", {
+          statusCode: razorpayError.statusCode,
+          error: razorpayError.error || razorpayError.message,
+          stack: razorpayError.stack
+        });
+        return res.status(500).json({
+          success: false,
+          message: "Payment gateway authentication failed. Please try again later.",
+        });
+      }
+      
+      throw razorpayError; // Re-throw for general error handling
+    }
   } catch (error) {
     await session.abortTransaction();
     console.error("Error in createOrder:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || "Failed to create order. Please try again." 
+    });
+  } finally {
+    session.endSession();
   }
 };
 

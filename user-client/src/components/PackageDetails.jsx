@@ -10,6 +10,10 @@ import {
   Stack,
   Tabs,
   Tab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { Add, Remove, AccessTime, Category, Group } from "@mui/icons-material"; // Added icons
 import hero from "../assets/hero.jpg";
@@ -18,7 +22,7 @@ import HeaderPage from "./HeaderPage";
 import { GoogleMap, LoadScript } from "@react-google-maps/api";
 import { useSnackbar } from "./SnackbarProvider";
 import FooterPage from "./FooterPage";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { getPackageDetail } from "../api/TopDestinationApi";
 import { applyCoupon, createOrder, verifyOrder } from "../api/paymentAPI";
 import { useSelector } from "react-redux";
@@ -35,15 +39,17 @@ const center = {
 
 const PackageDetails = () => {
   const { showSnackbar } = useSnackbar();
-  const {name, email } = useSelector((state) => state.auth )
+  const { name, email, isAuthenticated } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
   const { packageId } = useParams();
   const [selectedImage, setSelectedImage] = useState(hero);
-  const [adultCount, setAdultCount] = useState(0);
+  const [adultCount, setAdultCount] = useState(1);
   const [selectedTab, setSelectedTab] = useState(0);
   const [packageDetails, setPackageDetails] = useState(null);
   const [couponCode, setCouponCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [finalAmount, setFinalAmount] = useState(0);
+  const [showLoginDialog, setShowLoginDialog] = useState(false);
 
   const handleTabChange = (event, newValue) => {
     setSelectedTab(newValue);
@@ -126,9 +132,14 @@ const PackageDetails = () => {
   };
 
   const handlePayment = async () => {
+    // Check if user is authenticated first
+    if (!isAuthenticated) {
+      setShowLoginDialog(true);
+      return;
+    }
+
     const totalAmount = finalAmount || calculateTotal();
-  console.log("run1");
-  
+    
     try {
       // Create order in backend
       const response = await createOrder({
@@ -137,10 +148,10 @@ const PackageDetails = () => {
         quantity: adultCount,
         discountCode: couponCode,
       });
-    console.log("run2")
+
       if (response.data.success) {
         const razorpayOptions = {
-          key: process.env.REACT_APP_RAZORPAY_KEY_ID, 
+          key: process.env.REACT_APP_RAZORPAY_KEY_ID || 'rzp_test_nAdl50PadmvUWT',
           amount: response.data.amount, 
           currency: response.data.currency,
           name: 'RishiTech04',
@@ -155,21 +166,24 @@ const PackageDetails = () => {
                 razorpay_signature: razorpayResponse.razorpay_signature,
               });
    
-              
-              console.log("run2")
               if (verificationResponse.data.success) {
                 showSnackbar(verificationResponse.data.message || "Payment successful", "success");
               } else {
                 showSnackbar("Payment verification failed", "error");
               }
             } catch (error) {
-              showSnackbar(error.response?.data?.message || 'Error verifying payment', 'error');
+              if (error.isAuthError) {
+                showSnackbar(error.message, "error");
+                // Redirect to login page
+                navigate('/login');
+              } else {
+                showSnackbar(error.message || 'Error verifying payment', 'error');
+              }
             }
           },
           prefill: {
-            name: name, 
-            email: email,
-           
+            name: name || '', 
+            email: email || '',
           },
           theme: {
             color: "#18a19a",
@@ -184,11 +198,26 @@ const PackageDetails = () => {
         }
       }
     } catch (error) {
-      showSnackbar('Error creating order', 'error');
+      if (error.isAuthError) {
+        showSnackbar(error.message || "Please login to continue with booking", "error");
+        // Show login dialog instead of immediate redirect
+        setShowLoginDialog(true);
+      } else {
+        showSnackbar(error.message || 'Error creating order', 'error');
+      }
     }
   };
   
+  const handleLoginRedirect = () => {
+    setShowLoginDialog(false);
+    // Save current page to localStorage so we can redirect back after login
+    localStorage.setItem('redirectAfterLogin', window.location.pathname);
+    navigate('/signin');
+  };
   
+  const handleDialogClose = () => {
+    setShowLoginDialog(false);
+  };
 
   return (
     <Box sx={{ backgroundColor: "#f9f8eb", minHeight: "100vh" }}>
@@ -646,6 +675,28 @@ const PackageDetails = () => {
         /> */}
       </Box>
       <FooterPage />
+
+      {/* Login Dialog */}
+      <Dialog
+        open={showLoginDialog}
+        onClose={handleDialogClose}
+        aria-labelledby="login-dialog-title"
+      >
+        <DialogTitle id="login-dialog-title">Login Required</DialogTitle>
+        <DialogContent>
+          <Typography>
+            You need to be logged in to book this tour. Would you like to login now?
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose} color="primary">
+            Cancel
+          </Button>
+          <Button onClick={handleLoginRedirect} color="primary" variant="contained">
+            Go to Login
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

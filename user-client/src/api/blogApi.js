@@ -8,23 +8,45 @@ export const getBlogs = async () => {
   try {
     const response = await baseurl.get("/blog");
     
-    // Check response structure and ensure we return an array
-    if (response && response.data && Array.isArray(response.data)) {
-      return response.data;
-    } else if (response && response.data && Array.isArray(response.data.data)) {
-      return response.data.data;
-    } else {
-      console.warn("Unexpected blog API response structure:", response);
-      // Try to find an array in the response
-      if (response.data && typeof response.data === 'object') {
-        for (const key in response.data) {
-          if (Array.isArray(response.data[key])) {
-            return response.data[key];
-          }
+    // Enhanced response handling
+    if (!response || !response.data) {
+      console.warn("Empty response from blog API");
+      return [];
+    }
+    
+    const data = response.data;
+    
+    // Case 1: Response is already an array
+    if (Array.isArray(data)) {
+      return data;
+    }
+    
+    // Case 2: Response has a data property that is an array
+    if (data && typeof data === 'object' && Array.isArray(data.data)) {
+      return data.data;
+    }
+    
+    // Case 3: Response has a blogs property that is an array
+    if (data && typeof data === 'object' && Array.isArray(data.blogs)) {
+      return data.blogs;
+    }
+    
+    // Case 4: Look for any array property in the response
+    if (data && typeof data === 'object') {
+      for (const key in data) {
+        if (Array.isArray(data[key]) && data[key].length > 0) {
+          return data[key];
         }
       }
-      return []; // Return empty array if no suitable data found
     }
+    
+    // Case 5: If response is a blog object itself, wrap it in an array
+    if (data && typeof data === 'object' && (data.title || data._id)) {
+      return [data];
+    }
+    
+    console.warn("Unexpected blog API response structure:", response);
+    return []; // Return empty array if no suitable data found
   } catch (error) {
     console.error("Error fetching blogs:", error);
     return []; // Return empty array on error

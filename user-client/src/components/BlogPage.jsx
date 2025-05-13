@@ -12,14 +12,31 @@ function BlogPage() {
     const fetchBlogs = async () => {
       try {
         setLoading(true);
-        const data = await getBlogs();
+        const response = await getBlogs();
         
-        // Blogs API should now return a properly structured array
-        if (Array.isArray(data) && data.length > 0) {
-          const limitedBlogs = data.slice(0, 3);
+        // Ensure blogs is always an array, regardless of response structure
+        let blogsData = [];
+        
+        if (Array.isArray(response)) {
+          blogsData = response;
+        } else if (response && typeof response === 'object') {
+          // If response is an object, try to find an array property
+          const arrayProps = Object.values(response).find(value => Array.isArray(value));
+          if (arrayProps) {
+            blogsData = arrayProps;
+          } else {
+            // If no array found but object has necessary blog properties, wrap it in an array
+            if (response.title || response._id) {
+              blogsData = [response];
+            }
+          }
+        }
+        
+        if (blogsData.length > 0) {
+          const limitedBlogs = blogsData.slice(0, 3);
           setBlogs(limitedBlogs);
         } else {
-          console.warn("No blog data available or unexpected format", data);
+          console.warn("No blog data available or unexpected format", response);
           setError("No blog posts available at the moment");
           setBlogs([]);
         }

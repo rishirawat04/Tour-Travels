@@ -7,10 +7,10 @@ const router = express.Router();
 
 // Authentication routes
 router.post('/signup', signup)
-router.post('/verify-account', verifyAccount);
+router.post('/verifyAccount', verifyAccount);
 router.post('/verify-otp', verifyOTP);
 router.post('/signin', signin);
-router.post('/resend-verification', resendVerificationCode);
+router.post('/resendCode', resendVerificationCode);
 router.post('/logout', logout);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);

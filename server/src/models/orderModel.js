@@ -4,9 +4,9 @@ const orderSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   packageId: { type: mongoose.Schema.Types.ObjectId, ref: 'Package', required: true },
   quantity: { type: Number, required: true, min: 1 },
-  totalAmount: { type: mongoose.Schema.Types.Decimal128, required: true },
+  totalAmount: { type: Number, required: true },
   discountCode: { type: String },
-  discount: { type: mongoose.Schema.Types.Decimal128, default: 0 },
+  discount: { type: Number, default: 0 },
   status: { 
     type: String, 
     default: 'Pending', 

@@ -11,17 +11,17 @@ if (!process.env.EMAIL || !process.env.EMAIL_PASSWORD) {
 }
 
 export const transporter = nodemailer.createTransport({
+    service: "gmail",
     host: "smtp.gmail.com",
-  port: 587,
-  secure: false, 
-  auth: {
-    user: process.env.EMAIL,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-  pool: true,
-  // Debug options
-  debug: process.env.NODE_ENV === 'development',
-  logger: process.env.NODE_ENV === 'development'
+    port: 465,
+    secure: true, 
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.EMAIL_PASSWORD,
+    },
+    // Debug options
+    debug: process.env.NODE_ENV === 'development',
+    logger: process.env.NODE_ENV === 'development'
 });
 
 // Verify connection configuration

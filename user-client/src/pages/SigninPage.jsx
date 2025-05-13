@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -9,6 +9,8 @@ import {
   FormControlLabel,
   Link,
   Divider,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import FacebookIcon from "@mui/icons-material/Facebook";
@@ -19,6 +21,8 @@ import { login } from "../api/auth";
 import { useDispatch } from "react-redux";
 import { userLogin } from "../redux/slices/authSlice";
 import { useNavigate, useLocation } from "react-router-dom";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 
 const SignInPage = () => {
   const navigate = useNavigate();
@@ -27,9 +31,20 @@ const SignInPage = () => {
     username: "",
     password: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [redirectPath, setRedirectPath] = useState(null);
   const { showSnackbar } = useSnackbar();
   const dispatch = useDispatch();
+  
+  // Check for redirect path on component mount
+  useEffect(() => {
+    const savedRedirectPath = localStorage.getItem('redirectAfterLogin');
+    if (savedRedirectPath) {
+      setRedirectPath(savedRedirectPath);
+      // Don't remove from localStorage yet - we'll do that after successful login
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -47,7 +62,8 @@ const SignInPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      validate();
+      if (!validate()) return;
+      
       const { userId, token, name, email, msg } = await login(
         formData.username,
         formData.password
@@ -59,7 +75,15 @@ const SignInPage = () => {
       // Show success message
       showSnackbar(msg || "Logged in successfully!", "success");
       
-      // Navigate to the last visited URL or default to homepage
+      // Check for stored redirect path from booking flow
+      const bookingRedirectPath = localStorage.getItem('redirectAfterLogin');
+      if (bookingRedirectPath) {
+        localStorage.removeItem('redirectAfterLogin'); // Clear after use
+        navigate(bookingRedirectPath, { replace: true });
+        return;
+      }
+      
+      // Otherwise, use normal navigation logic
       const lastVisitedUrl = sessionStorage.getItem("lastVisitedUrl") || "/user/dashboard";
       sessionStorage.removeItem("lastVisitedUrl"); // Clear after use
       
@@ -73,6 +97,9 @@ const SignInPage = () => {
     }
   };
   
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
   return (
     <Box
@@ -123,7 +150,7 @@ const SignInPage = () => {
             <TextField
               label="Password"
               name="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               fullWidth
               variant="outlined"
               value={formData.password}
@@ -131,6 +158,19 @@ const SignInPage = () => {
               error={!!errors.password}
               helperText={errors.password}
               sx={{ marginBottom: 2 }}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={handleTogglePasswordVisibility}
+                      edge="end"
+                      aria-label="toggle password visibility"
+                    >
+                      {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <Box
               sx={{

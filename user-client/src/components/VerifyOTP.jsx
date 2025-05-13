@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { TextField, Button, Typography, CircularProgress } from '@mui/material';
 
 import { useParams, useNavigate } from 'react-router-dom';
-import {  verifyPasswordOTP } from '../api/auth';
+import { verifyPasswordOTP } from '../api/auth';
 
 const VerifyOTP = () => {
   const { email } = useParams();
@@ -20,7 +20,7 @@ const VerifyOTP = () => {
 
     setLoading(true);
     try {
-      const response = await verifyPasswordOTP({ email, otp });
+      const response = await verifyPasswordOTP({ email, code: otp });
       setMessage(response.msg);
       setTimeout(() => {
         navigate(`/reset-password/${email}`); 
@@ -46,12 +46,18 @@ const VerifyOTP = () => {
         />
         <Button
           variant="contained"
-          color="#FF7A00"
+          color="primary"
           type="submit"
           fullWidth
           disabled={loading}
+          sx={{
+            backgroundColor: "#FF7A00",
+            '&:hover': {
+              backgroundColor: "#E86E00"
+            }
+          }}
         >
-          {loading ? <CircularProgress size={24} color="secondary" /> : 'Verify OTP'}
+          {loading ? <CircularProgress size={24} color="inherit" /> : 'Verify OTP'}
         </Button>
       </form>
       {message && <Typography color="error" align="center">{message}</Typography>}

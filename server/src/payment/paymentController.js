@@ -6,12 +6,26 @@ import mongoose from "mongoose";
 export const verifyPayment = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
+  
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-      req.body;
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+    const userId = req.user?.id;
+
+    // Verify user authentication explicitly
+    if (!userId) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required. Please login to continue.",
+        requiresAuth: true
+      });
+    }
 
     // Validate inputs
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      await session.abortTransaction();
+      session.endSession();
       return res
         .status(400)
         .json({ success: false, message: "Missing required fields" });
@@ -21,13 +35,18 @@ export const verifyPayment = async (req, res) => {
     const order = await Order.findOne({
       razorpayOrderId: razorpay_order_id,
     }).session(session);
+    
     if (!order) {
+      await session.abortTransaction();
+      session.endSession();
       return res
         .status(404)
         .json({ success: false, message: "Order not found" });
     }
 
     if (order.status === "Confirmed") {
+      await session.abortTransaction();
+      session.endSession();
       return res
         .status(400)
         .json({ success: false, message: "Order already confirmed" });
@@ -42,6 +61,7 @@ export const verifyPayment = async (req, res) => {
 
     if (generatedSignature !== razorpay_signature) {
       await session.abortTransaction();
+      session.endSession();
       return res
         .status(400)
         .json({ success: false, message: "Invalid payment signature" });
@@ -51,7 +71,7 @@ export const verifyPayment = async (req, res) => {
     const paymentDetails = new PaymentDetails({
       transactionId: razorpay_payment_id,
       method: "Razorpay",
-      amount: order.totalAmount,
+      amount: parseFloat(order.totalAmount),
       status: "Completed",
       date: new Date(),
       userId: order.userId,
@@ -75,7 +95,10 @@ export const verifyPayment = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     console.error("Error in verifyPayment:", error);
-    res.status(500).json({ success: false, message: "Server error" });
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || "Server error during payment verification" 
+    });
   } finally {
     session.endSession();
   }
@@ -121,7 +144,7 @@ export const getPaymentDetailsByUser = async (req, res) => {
     const formattedPayments = payments.map((payment) => ({
       transactionId: payment.transactionId,
       method: payment.method,
-      amount: parseFloat(payment.amount), 
+      amount: payment.amount,
       status: payment.status,
       bookingAt: payment.createdAt.toISOString(),
     }));

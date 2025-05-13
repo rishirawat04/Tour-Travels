@@ -6,19 +6,31 @@ export const verifyToken = async(req, res, next) => {
 
 
     if(!token) {
-        return res.status(401).json({message: "Access denied. Please login"})
+        return res.status(401).json({
+            success: false,
+            message: "Authentication required. Please login to continue.",
+            requiresAuth: true
+        });
     }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
         const user = await User.findById(decoded.id)
         if(!user) {
-            return res.status(401).json({ message: "User not found."})
+            return res.status(401).json({ 
+                success: false,
+                message: "User account not found. Please login again.",
+                requiresAuth: true
+            });
         }
         req.user = decoded;
         next()
     } catch (error) {
-        res.status(500).json({ message: "Invalid or expired token."})
+        res.status(401).json({ 
+            success: false,
+            message: "Session expired. Please login again.", 
+            requiresAuth: true
+        });
     }
 }
 

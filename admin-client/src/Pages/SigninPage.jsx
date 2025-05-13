@@ -9,10 +9,14 @@ import {
   FormControlLabel,
   Link,
   Divider,
+  IconButton,
+  InputAdornment,
 } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import AppleIcon from "@mui/icons-material/Apple";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import signin from "../assets/signin.webp";
 import { useSnackbar } from "../Components/SnackbarProvider";
 
@@ -29,12 +33,17 @@ const SignInPage = () => {
     password: "",
   });
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
   const { showSnackbar } = useSnackbar();
   const dispatch = useDispatch();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   const validate = () => {
@@ -142,7 +151,7 @@ if(role === 'user'){
               <TextField
                 label="Password"
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 fullWidth
                 variant="outlined"
                 value={formData.password}
@@ -150,6 +159,19 @@ if(role === 'user'){
                 error={!!errors.password}
                 helperText={errors.password}
                 sx={{ marginBottom: 2 }}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={handleTogglePasswordVisibility}
+                        edge="end"
+                        aria-label="toggle password visibility"
+                      >
+                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Box>
             <Box

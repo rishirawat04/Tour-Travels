@@ -53,6 +53,9 @@ const VerifyAccountPage = () => {
       setLoading(true);
       const response = await verifyOTP({ email, code: otpCode });
       showSnackbar(response.msg, "success");
+      setTimeout(() => {
+        navigate("/signin");
+      }, 1500);
     } catch (error) {
       console.error("Error verifying OTP:", error);
       showSnackbar(error, "error");

@@ -17,10 +17,24 @@ export const checkAuthStatus = (store) => {
     if (Date.now() > expirationTime) {
       // Token is expired, dispatch action to update state
       store.dispatch(setTokenExpired());
+      
+      // Clean up localStorage
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      // Handle cookie clearing (if possible to do client-side)
+      document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     }
   } catch (error) {
     console.error("Error checking authentication status:", error);
     // If there's an error parsing the token, consider it invalid
     store.dispatch(setTokenExpired());
+    
+    // Clean up localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Handle cookie clearing (if possible to do client-side)
+    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   }
 }; 
